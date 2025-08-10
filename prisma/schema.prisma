@@ -1,0 +1,69 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Staff {
+  id         String   @id @default(cuid())
+  name       String
+  email      String   @unique
+  department String
+  employeeId String   @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  loans Loan[]
+
+  @@map("staff")
+}
+
+model Loan {
+  id                String     @id @default(cuid())
+  staffId           String
+  loanAmount        Float
+  durationMonths    Int
+  monthlyPayment    Float
+  outstandingBalance Float
+  status            LoanStatus @default(ACTIVE)
+  startDate         DateTime   @default(now())
+  endDate           DateTime?
+  notes             String?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  // Relations
+  staff    Staff     @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  payments Payment[]
+
+  @@map("loans")
+}
+
+model Payment {
+  id               String   @id @default(cuid())
+  loanId           String
+  amount           Float
+  paymentDate      DateTime @default(now())
+  remainingBalance Float
+  notes            String?
+  createdAt        DateTime @default(now())
+
+  // Relations
+  loan Loan @relation(fields: [loanId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+enum LoanStatus {
+  ACTIVE
+  SUSPENDED
+  FULLY_PAID
+  BAD_DEBT
+}
